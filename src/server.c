@@ -67,9 +67,6 @@ int main() {
         }
     }
 
-    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    bind(sockfd, res->ai_addr, res->ai_addrlen);
-    listen(sockfd, BACKLOG);
 
     
     connSize = sizeof(connInfo);
