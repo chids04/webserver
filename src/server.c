@@ -139,38 +139,6 @@ int handleConn(int sockfd){
     }
 
 }
-/* void handleClientConnection(int sockfd){
-
-    struct sockaddr_storage connInfo;
-    socklen_t connSize;
-    char clientip[INET_ADDRSTRLEN];
-    int newfd;
-
-    while (1) {
-        connSize = sizeof(connInfo);
-        newfd = accept(sockfd, (struct sockaddr*)&connInfo, &connSize);
-        if (newfd == -1) {
-            perror("error accepting socket");
-        }
-
-        inet_ntop(connInfo.ss_family, getAddr((struct sockaddr*)&connInfo), clientip, sizeof(clientip));
-        printf("got connection from: %s\n", clientip);
-
-        if (!fork()) {
-            close(sockfd);
-
-            if (send(newfd, "Hello World!", 13, 0) == -1) {
-                perror("error sending message to client");
-            }
-
-            close(newfd);
-            exit(0);
-        }
-
-        close(newfd);
-    }
-} */
-
 
 int main() {
     int sockfd = createServerSocket();
