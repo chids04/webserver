@@ -13,7 +13,7 @@
 
 #define PORT_NUM "1023"
 #define HOSTNAME "cmac.local"
-#define MAXBUFFSIZE 100
+#define MAXBUFFSIZE 300
 
 void *getAddr(struct sockaddr *sa){
 
@@ -65,7 +65,7 @@ int conn2serv(){
     return sockfd;
 }
 
-void recievedata(int sockfd){
+void handleConn(int sockfd){
     char buff[MAXBUFFSIZE];
     int numbytes;
 
@@ -76,19 +76,31 @@ void recievedata(int sockfd){
 
     buff[numbytes] = '\0';
 
-    printf("message recieved: %s\n", buff);
+    printf("%s\n", buff);
 
-    
+
 }
 
-int main() {
+void sendRequest(int sockfd, char *message){
+    int bytes_sent;
+
+    if((bytes_sent = send(sockfd, message, strlen(message), 0)) == -1){
+        perror("error sending message");
+        exit(1);
+    }
+
+    printf("sent: %s\n", message);
+}
+
+int main(int argc, char *argv[]) {
     int sockfd = conn2serv();
 
     if(sockfd == 1){
         perror("error connecting to server");
     }
 
-    recievedata(sockfd);
+    handleConn(sockfd);
+    sendRequest(sockfd, "hello");
 
     return 0;
 }

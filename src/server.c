@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -13,6 +14,8 @@
 
 #define BACKLOG 5
 #define PORT_NUM "1023"
+#define CLIENT_IP "127.0.0.1"
+#define MAXBUFFSIZE 300
 
 void sigchld_handler(int s){
     
@@ -81,7 +84,62 @@ int createServerSocket(){
     return sockfd;
 }
 
-void handleClientConnection(int sockfd){
+void handleRequest(int newfd){
+    int bytes;
+    char buff[MAXBUFFSIZE];
+
+    if((bytes = recv(newfd, buff, MAXBUFFSIZE-1, 0)) == -1){
+        perror("error recieving data");
+        return;
+    }
+
+    buff[bytes] = '\0';
+    printf("message recieved: %s\n", buff);
+
+}
+
+int handleConn(int sockfd){
+    struct sockaddr_storage connInfo;
+    socklen_t connSize;
+    char clientip[INET_ADDRSTRLEN];
+    int newfd;
+    int success = 0;
+    char *message = "HTTP/1.0 200 OK";
+
+
+    while(1){
+        connSize = sizeof(connInfo);
+        newfd = accept(sockfd, (struct sockaddr*)&connInfo, &connSize);
+        if (newfd == -1) {
+            perror("error accepting socket");
+            return -1;
+        }
+
+        inet_ntop(connInfo.ss_family, getAddr((struct sockaddr*)&connInfo), clientip, sizeof(clientip));
+        printf("got connection from: %s\n", clientip);
+
+        if (!fork()) {
+            close(sockfd);
+
+            if (send(newfd, message, (int)strlen(message), 0) == -1) {
+                perror("error sending message to client");
+                success = -1;
+            }
+
+            if(success == 0){
+                handleRequest(newfd);
+            }
+            
+
+            close(newfd);
+            exit(0);
+        }
+        close(newfd);
+
+    }
+
+}
+/* void handleClientConnection(int sockfd){
 
     struct sockaddr_storage connInfo;
     socklen_t connSize;
@@ -111,11 +169,12 @@ void handleClientConnection(int sockfd){
 
         close(newfd);
     }
-}
+} */
 
 
 int main() {
     int sockfd = createServerSocket();
+    bool running = true;
     if (sockfd == -1) {
         exit(1);
     }
@@ -130,9 +189,7 @@ int main() {
         exit(1);
     }
 
-    printf("server waiting for connections.....\n");
-
-    handleClientConnection(sockfd);
+    handleConn(sockfd);
 
     return 0;
 }
